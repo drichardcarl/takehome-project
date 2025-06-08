@@ -20,19 +20,34 @@ The boilerplate includes:
 ## Tasks to Complete
 
 ### 1. WASM Integration (Required)
-Load and instantiate the provided `renderer.wasm` file and its associated renderer.js glue code. They are placed it in the `public/` folde. These export:
+Load and integrate the provided `renderer.wasm` and `renderer.js` files for canvas rendering.
 
+**WASM Module Specification:**
+- **Module Location**: `renderer.js` and `renderer.wasm` are provided in the `public/` folder
+- **Module Export**: `renderer.js` exports a `RendererModule()` function that returns a Promise
+- **Canvas Binding**: The module automatically binds to canvas element with ID `canvas`
+
+**Available Functions:**
 ```typescript
-// WASM Functions Available
-init_canvas(selector: string): boolean  // Initialize canvas binding
-render_scene(scene_name: string, scene_color: string, local_frame: number): void  // Render frame
-clear_canvas(): void  // Clear canvas
+interface RendererAPI {
+  render_scene: (scene_name: string, scene_color: string, local_frame: number) => void;
+  clear_canvas: () => void;
+}
 ```
 
 **Implementation Requirements:**
-- Load and instantiate the WASM module on app startup
-- Bind the WASM renderer to the canvas element with ID `canvas`
-- Handle WASM loading errors gracefully
+- Load the renderer.js script dynamically or include it in your build
+- Instantiate the module using `await RendererModule()`
+- Use Emscripten's `cwrap` to create callable JavaScript functions
+- Handle module loading errors gracefully with proper error states
+
+**Function Specifications:**
+- `render_scene(scene_name, scene_color, local_frame)`: 
+  - `scene_name`: Scene identifier string
+  - `scene_color`: Hex color (e.g., "#FF5733")  
+  - `local_frame`: Frame number within scene (0-based)
+- `clear_canvas()`: Clears canvas to black
+
 
 ### 2. Playback System (Required)
 Implement a 30fps playback system:
@@ -69,6 +84,7 @@ Implement frame-by-frame rendering:
 
 **Drag & Drop Reordering:**
 - Implement drag & drop to reorder scenes
+- You may use default HTML5 drag functionality, or a custom packagle of your choice.
 - Update scene indices when reordered
 - Maintain timeline continuity during reordering
 
@@ -107,6 +123,7 @@ Ensure proper scene data management:
 ## Nice-to-Have Features (Optional)
 
 ### 1. Smooth Animations
+- You're welcome to use any library you'd like for this, including Motion (Framer Motion)
 - Animate scene position changes during drag & drop
 - Smooth transitions for timeline updates
 - Easing for UI state changes
@@ -119,10 +136,21 @@ Ensure proper scene data management:
 
 ### WASM Loading Pattern
 ```typescript
-// Example WASM loading approach
-const loadWasm = async () => {
-  const wasmModule = await import('/renderer.wasm');
-  // Initialize and bind to canvas
+// Example WASM integration approach
+const initializeRenderer = async () => {
+  // Load renderer.js script
+  const script = document.createElement('script');
+  script.src = '/renderer.js';
+  document.head.appendChild(script);
+  
+  // Wait for script to load, then instantiate module
+  const Module = await window.RendererModule();
+  
+  // Wrap functions using Emscripten's cwrap
+  return {
+    renderScene: Module.cwrap('render_scene', null, ['string', 'string', 'number']),
+    clearCanvas: Module.cwrap('clear_canvas', null, [])
+  };
 };
 ```
 
@@ -158,9 +186,9 @@ You may need to extend the Zustand store with:
 
 ## Getting Started
 
-1. Place `renderer.wasm` in the `public/` folder
+1. The `renderer.wasm` and `renderer.js` files are already provided in the `public/` folder
 2. Run `npm install` and `npm run dev`
-3. Start with WASM integration
+3. Start with WASM integration following the specification above
 4. Implement playback system
 5. Add timeline interactivity
 6. Implement command pattern

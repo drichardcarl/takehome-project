@@ -39,7 +39,18 @@ export const PlaybackControls = () => {
         <Slider
           value={0}
           max={120}
-          sx={{ flex: 1 }}
+          sx={{ 
+            flex: 1,
+            '& .MuiSlider-thumb': {
+              transition: 'none'
+            },
+            '& .MuiSlider-track': {
+              transition: 'none'
+            },
+            '& .MuiSlider-rail': {
+              transition: 'none'
+            }
+          }}
         />
         
         <Typography variant="body2" sx={{ minWidth: '40px' }}>

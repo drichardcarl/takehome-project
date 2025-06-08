@@ -25,25 +25,6 @@ export const Scene = ({ scene }: SceneProps) => {
         flexShrink: 0
       }}
     >
-      {/* Left resize handle */}
-      <Box
-        sx={{
-          position: 'absolute',
-          left: 0,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: '6px',
-          height: '40px',
-          backgroundColor: theme.palette.background.paper,
-          borderRadius: '3px',
-          cursor: 'ew-resize',
-          opacity: 0.7,
-          '&:hover': {
-            opacity: 0.9
-          }
-        }}
-      />
-      
       <CardContent sx={{ p: 1 }}>
         <Typography 
           variant="h6" 

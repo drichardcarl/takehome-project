@@ -13,7 +13,7 @@ export const Canvas = () => {
       }}
     >
       <canvas
-        id="render-canvas"
+        id="canvas"
         width={1280}
         height={720}
         style={{

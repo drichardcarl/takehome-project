@@ -28,34 +28,41 @@ Load and integrate the provided `renderer.wasm` and `renderer.js` files for canv
 - **Canvas Binding**: The module automatically binds to canvas element with ID `canvas`
 
 **Available Functions:**
+The WASM module provides functions that are directly callable (no cwrap needed):
+
 ```typescript
 interface RendererAPI {
-  render_scene: (scene_name: string, scene_color: string, local_frame: number) => void;
-  clear_canvas: () => void;
+  initCanvas: (canvasSelector: string) => void;
+  renderScene: (scene_name: string, scene_color: string, local_frame: number) => void;
+  clearCanvas: () => void;
 }
 ```
 
 **Implementation Requirements:**
 - Load the renderer.js script dynamically or include it in your build
 - Instantiate the module using `await RendererModule()`
-- Use Emscripten's `cwrap` to create callable JavaScript functions
+- Functions are pre-wrapped and ready to use directly - no cwrap needed
 - Handle module loading errors gracefully with proper error states
 
 **Function Specifications:**
-- `render_scene(scene_name, scene_color, local_frame)`: 
+- `initCanvas(canvasSelector)`: Initialize the canvas for rendering
+  - `canvasSelector`: CSS selector for the canvas element (e.g., "#canvas")
+- `renderScene(scene_name, scene_color, local_frame)`: 
   - `scene_name`: Scene identifier string
   - `scene_color`: Hex color (e.g., "#FF5733")  
   - `local_frame`: Frame number within scene (0-based)
-- `clear_canvas()`: Clears canvas to black
+- `clearCanvas()`: Clears canvas to black
 
 
 ### 2. Playback System (Required)
 Implement a 30fps playback system:
 
 **Timeline Logic:**
+- Scenes are arranged sequentially in a single continuous timeline
 - Total timeline duration = sum of all scene lengths (in frames)
 - Each scene length represents frames (e.g., 30 = 1 second at 30fps)
 - Track current global frame position across entire timeline
+- Scene positions are calculated cumulatively (Scene 1: 0-29, Scene 2: 30-59, etc.)
 
 **Playback Controls:**
 - Play/pause functionality
@@ -67,9 +74,10 @@ Implement a 30fps playback system:
 Implement frame-by-frame rendering:
 
 **Rendering Logic:**
-- Determine which scene is active at current frame
+- Determine which scene is active at current global frame position
 - Calculate local frame within that scene (0 to scene_length-1)
-- Call `render_scene()` with scene name, color, and local frame
+- Scene boundaries are determined by cumulative frame positions
+- Call `renderScene()` with scene name, color, and local frame
 - Update rendering every frame during playback
 - Render single frame when scrubbing/seeking
 
@@ -80,17 +88,19 @@ Implement frame-by-frame rendering:
 - Generate new scenes with incremented names ("Scene 4", "Scene 5", etc.)
 - Assign random colors to new scenes
 - Default new scene length: 30 frames
-- Add new scenes to end of timeline
+- Add new scenes to end of timeline (scenes are always contiguous)
 
 **Drag & Drop Reordering:**
 - Implement drag & drop to reorder scenes
-- You may use default HTML5 drag functionality, or a custom packagle of your choice.
+- You may use default HTML5 drag functionality, or a custom package of your choice
+- Scenes automatically rearrange to maintain sequential order (no gaps between scenes)
 - Update scene indices when reordered
-- Maintain timeline continuity during reordering
+- Recalculate timeline positions after reordering
 
 **Scene Duration Editing:**
 - Allow resizing scenes by dragging right edge
 - Minimum scene length: 10 frames
+- When a scene is resized, subsequent scenes automatically shift position to maintain continuity
 - Update total timeline duration when scenes are resized
 
 ### 5. Command Pattern & Undo/Redo (Required)
@@ -116,9 +126,11 @@ interface Command {
 
 ### 6. Scene Management (Required)
 Ensure proper scene data management:
+- Scenes must always be positioned sequentially without gaps
 - Update `scene_index` values when reordering
+- Recalculate scene start positions when adding/resizing/reordering scenes
 - Recalculate total timeline frames when adding/resizing scenes
-- Validate timeline state consistency
+- Validate timeline state consistency and sequential positioning
 
 ## Nice-to-Have Features (Optional)
 
@@ -136,7 +148,7 @@ Ensure proper scene data management:
 
 ### WASM Loading Pattern
 ```typescript
-// Example WASM integration approach
+// Example WASM integration approach (based on HTML example)
 const initializeRenderer = async () => {
   // Load renderer.js script
   const script = document.createElement('script');
@@ -146,11 +158,27 @@ const initializeRenderer = async () => {
   // Wait for script to load, then instantiate module
   const Module = await window.RendererModule();
   
-  // Wrap functions using Emscripten's cwrap
+  // Initialize the canvas
+  Module.initCanvas('#canvas');
+  
+  // Functions are ready to use directly - no cwrap needed!
   return {
-    renderScene: Module.cwrap('render_scene', null, ['string', 'string', 'number']),
-    clearCanvas: Module.cwrap('clear_canvas', null, [])
+    initCanvas: Module.initCanvas,
+    renderScene: Module.renderScene,
+    clearCanvas: Module.clearCanvas
   };
+};
+
+// Usage example
+const testRender = async () => {
+  const Module = await RendererModule();
+  Module.initCanvas('#canvas');
+  Module.renderScene('Test Scene', '#FF5733', 0);
+};
+
+const testClear = async () => {
+  const Module = await RendererModule();
+  Module.clearCanvas();
 };
 ```
 

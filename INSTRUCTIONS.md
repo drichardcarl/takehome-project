@@ -92,7 +92,7 @@ Implement frame-by-frame rendering:
 
 **Drag & Drop Reordering:**
 - Implement drag & drop to reorder scenes
-- You may use default HTML5 drag functionality, or a custom package of your choice
+- You may use default HTML5 drag functionality, or a custom package of your choice. We recommend DnD Kit.
 - Scenes automatically rearrange to maintain sequential order (no gaps between scenes)
 - Update scene indices when reordered
 - Recalculate timeline positions after reordering

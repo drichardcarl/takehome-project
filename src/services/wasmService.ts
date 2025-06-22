@@ -1,4 +1,4 @@
-import type { RendererAPI } from '../store/timelineStore';
+import type { RendererAPI } from "../store/timelineStore";
 
 declare global {
   interface Window {
@@ -38,31 +38,32 @@ export class WasmService {
       // Check if the script is already loaded
       if (!window.RendererModule) {
         // Load the renderer.js script
-        const script = document.createElement('script');
-        script.src = '/renderer.js';
+        const script = document.createElement("script");
+        script.src = "/renderer.js";
         script.async = true;
-        
+
         await new Promise<void>((resolve, reject) => {
           script.onload = () => resolve();
-          script.onerror = () => reject(new Error('Failed to load renderer.js'));
+          script.onerror = () =>
+            reject(new Error("Failed to load renderer.js"));
           document.head.appendChild(script);
         });
       }
 
       // Wait for the module to be available
       if (!window.RendererModule) {
-        throw new Error('RendererModule not found after loading script');
+        throw new Error("RendererModule not found after loading script");
       }
 
       // Instantiate the module
       this.module = await window.RendererModule();
-      
+
       // Initialize the canvas
-      this.module.initCanvas('#canvas');
-      
+      this.module.initCanvas("#canvas");
+
       return this.module;
     } catch (error) {
-      console.error('Failed to initialize WASM renderer:', error);
+      console.error("Failed to initialize WASM renderer:", error);
       throw error;
     }
   }
@@ -76,4 +77,4 @@ export class WasmService {
   }
 }
 
-export const wasmService = WasmService.getInstance(); 
+export const wasmService = WasmService.getInstance();

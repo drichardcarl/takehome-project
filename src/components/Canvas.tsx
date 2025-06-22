@@ -40,7 +40,7 @@ export const Canvas = () => {
         wasmInstance.renderScene(
           scene.scene_name,
           scene.scene_color,
-          localFrame
+          localFrame,
         );
       } else {
         wasmInstance.clearCanvas();

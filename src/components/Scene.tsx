@@ -13,16 +13,15 @@ export const Scene = ({ scene }: SceneProps) => {
   const { reorderScenes, resizeScene } = useTimelineStore();
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
   const [resizeStartX, setResizeStartX] = useState(0);
   const [originalLength, setOriginalLength] = useState(0);
+  const [currentMouseX, setCurrentMouseX] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const width = Math.max(scene.scene_length * 4, 120);
 
   const handleDragStart = (e: React.DragEvent) => {
     setIsDragging(true);
-    setDragStartX(e.clientX);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", scene.scene_index.toString());
   };
@@ -58,6 +57,7 @@ export const Scene = ({ scene }: SceneProps) => {
     (e: MouseEvent) => {
       if (!isResizing) return;
 
+      setCurrentMouseX(e.clientX);
       const deltaX = e.clientX - resizeStartX;
       const deltaFrames = Math.round(deltaX / 4); // 4px per frame
       const newLength = Math.max(10, originalLength + deltaFrames);
@@ -68,7 +68,7 @@ export const Scene = ({ scene }: SceneProps) => {
         cardRef.current.style.width = `${newWidth}px`;
       }
     },
-    [isResizing, resizeStartX, originalLength],
+    [isResizing, resizeStartX, originalLength]
   );
 
   const handleResizeEnd = useCallback(() => {
@@ -76,8 +76,8 @@ export const Scene = ({ scene }: SceneProps) => {
 
     setIsResizing(false);
 
-    // Calculate final length
-    const deltaX = (resizeStartX - dragStartX) * -1; // Invert for resize direction
+    // Calculate final length using current mouse position
+    const deltaX = currentMouseX - resizeStartX;
     const deltaFrames = Math.round(deltaX / 4);
     const newLength = Math.max(10, originalLength + deltaFrames);
 
@@ -91,8 +91,8 @@ export const Scene = ({ scene }: SceneProps) => {
     }
   }, [
     isResizing,
+    currentMouseX,
     resizeStartX,
-    dragStartX,
     originalLength,
     scene.scene_length,
     scene.scene_index,

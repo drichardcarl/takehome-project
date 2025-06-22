@@ -87,6 +87,80 @@ const recalculateScenePositions = (scenes: Scene[]): Scene[] => {
     });
 };
 
+// Helper function to update playback state after timeline changes
+const updatePlaybackAfterTimelineChange = (
+  set: (partial: Partial<TimelineState>) => void,
+  get: () => TimelineState
+) => {
+  const { playback, totalFrames, scenes } = get();
+
+  console.log("Updating playback after timeline change:", {
+    currentFrame: playback.currentFrame,
+    totalFrames,
+    scenesCount: scenes.length,
+  });
+
+  // Find the current scene and local frame before the change
+  const currentSceneInfo = get().getSceneAtFrame(playback.currentFrame);
+
+  let newCurrentFrame = playback.currentFrame;
+
+  if (currentSceneInfo) {
+    const { scene: oldScene, localFrame } = currentSceneInfo;
+
+    console.log("Current scene info:", {
+      sceneName: oldScene.scene_name,
+      localFrame,
+      oldStartFrame: oldScene.start_frame,
+    });
+
+    // Find the same scene in the updated timeline by name
+    const newScene = scenes.find((s) => s.scene_name === oldScene.scene_name);
+
+    if (newScene) {
+      // Calculate the new current frame based on the scene's new position
+      // and the same local frame within that scene
+      newCurrentFrame =
+        newScene.start_frame + Math.min(localFrame, newScene.scene_length - 1);
+
+      console.log("Found scene in new timeline:", {
+        newStartFrame: newScene.start_frame,
+        newSceneLength: newScene.scene_length,
+        newCurrentFrame,
+      });
+    } else {
+      // If the scene was removed, clamp to valid range
+      newCurrentFrame = Math.max(
+        0,
+        Math.min(playback.currentFrame, totalFrames - 1)
+      );
+      console.log("Scene not found, clamping to:", newCurrentFrame);
+    }
+  } else {
+    // If no scene found, clamp to valid range
+    newCurrentFrame = Math.max(
+      0,
+      Math.min(playback.currentFrame, totalFrames - 1)
+    );
+    console.log("No scene info found, clamping to:", newCurrentFrame);
+  }
+
+  // Pause playback and update current frame
+  const updatedPlayback = {
+    ...playback,
+    isPlaying: false,
+    currentFrame: newCurrentFrame,
+  };
+
+  console.log("Updated playback:", {
+    oldFrame: playback.currentFrame,
+    newFrame: newCurrentFrame,
+    isPlaying: updatedPlayback.isPlaying,
+  });
+
+  set({ playback: updatedPlayback });
+};
+
 export const useTimelineStore = create<TimelineState>((set, get) => ({
   scenes: [
     {
@@ -175,14 +249,28 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         const [movedScene] = updatedScenes.splice(fromIndex, 1);
         updatedScenes.splice(toIndex, 0, movedScene);
         const recalculatedScenes = recalculateScenePositions(updatedScenes);
-        set({ scenes: recalculatedScenes });
+        const totalFrames = recalculatedScenes.reduce(
+          (sum, scene) => sum + scene.scene_length,
+          0
+        );
+        set({
+          scenes: recalculatedScenes,
+          totalFrames,
+        });
       },
       undo: () => {
         const updatedScenes = [...scenes];
         const [movedScene] = updatedScenes.splice(toIndex, 1);
         updatedScenes.splice(fromIndex, 0, movedScene);
         const recalculatedScenes = recalculateScenePositions(updatedScenes);
-        set({ scenes: recalculatedScenes });
+        const totalFrames = recalculatedScenes.reduce(
+          (sum, scene) => sum + scene.scene_length,
+          0
+        );
+        set({
+          scenes: recalculatedScenes,
+          totalFrames,
+        });
       },
       description: `Move ${scenes[fromIndex].scene_name} to position ${
         toIndex + 1
@@ -261,6 +349,9 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
       commandHistory: newHistory,
       commandIndex: newHistory.length - 1,
     });
+
+    // Update playback state after command execution
+    updatePlaybackAfterTimelineChange(set, get);
   },
 
   undo: () => {
@@ -268,6 +359,8 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     if (commandIndex >= 0) {
       commandHistory[commandIndex].undo();
       set({ commandIndex: commandIndex - 1 });
+      // Update playback state after undo
+      updatePlaybackAfterTimelineChange(set, get);
     }
   },
 
@@ -276,6 +369,8 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     if (commandIndex < commandHistory.length - 1) {
       commandHistory[commandIndex + 1].execute();
       set({ commandIndex: commandIndex + 1 });
+      // Update playback state after redo
+      updatePlaybackAfterTimelineChange(set, get);
     }
   },
 

@@ -35,6 +35,7 @@ export const Timeline = () => {
           gap: 0.5,
           p: 2,
           minHeight: "160px",
+          width: "90vw",
           maxWidth: "90vw",
           overflowX: "auto",
           backgroundColor: "#cccccc",

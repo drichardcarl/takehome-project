@@ -9,8 +9,14 @@ export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
 
-  const { wasmInstance, setWasmInstance, playback, getSceneAtFrame } =
-    useTimelineStore();
+  const {
+    wasmInstance,
+    setWasmInstance,
+    playback,
+    getSceneAtFrame,
+    totalFrames,
+    scenes,
+  } = useTimelineStore();
 
   // Initialize WASM on component mount
   useEffect(() => {
@@ -40,7 +46,7 @@ export const Canvas = () => {
         wasmInstance.renderScene(
           scene.scene_name,
           scene.scene_color,
-          localFrame,
+          localFrame
         );
       } else {
         wasmInstance.clearCanvas();
@@ -48,7 +54,13 @@ export const Canvas = () => {
     };
 
     renderFrame();
-  }, [wasmInstance, playback.currentFrame, getSceneAtFrame]);
+  }, [
+    wasmInstance,
+    playback.currentFrame,
+    totalFrames,
+    scenes,
+    getSceneAtFrame,
+  ]);
 
   // Handle playback animation
   useEffect(() => {

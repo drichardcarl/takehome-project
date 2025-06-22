@@ -130,7 +130,6 @@ export const Scene = ({ scene }: SceneProps) => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        mx: 0.5,
         cursor: isDragging ? "grabbing" : "grab",
         position: "relative",
         flexShrink: 0,

@@ -1,21 +1,16 @@
-import { Box } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { useEffect, useRef } from 'react';
-import { useTimelineStore } from '../store/timelineStore';
-import { wasmService } from '../services/wasmService';
+import { Box } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import { useEffect, useRef } from "react";
+import { useTimelineStore } from "../store/timelineStore";
+import { wasmService } from "../services/wasmService";
 
 export const Canvas = () => {
   const theme = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
-  
-  const {
-    wasmInstance,
-    setWasmInstance,
-    playback,
-    getSceneAtFrame,
-    totalFrames
-  } = useTimelineStore();
+
+  const { wasmInstance, setWasmInstance, playback, getSceneAtFrame } =
+    useTimelineStore();
 
   // Initialize WASM on component mount
   useEffect(() => {
@@ -24,7 +19,7 @@ export const Canvas = () => {
         const module = await wasmService.loadRenderer();
         setWasmInstance(module);
       } catch (error) {
-        console.error('Failed to initialize WASM:', error);
+        console.error("Failed to initialize WASM:", error);
       }
     };
 
@@ -39,10 +34,14 @@ export const Canvas = () => {
 
     const renderFrame = () => {
       const sceneInfo = getSceneAtFrame(playback.currentFrame);
-      
+
       if (sceneInfo) {
         const { scene, localFrame } = sceneInfo;
-        wasmInstance.renderScene(scene.scene_name, scene.scene_color, localFrame);
+        wasmInstance.renderScene(
+          scene.scene_name,
+          scene.scene_color,
+          localFrame
+        );
       } else {
         wasmInstance.clearCanvas();
       }
@@ -53,25 +52,27 @@ export const Canvas = () => {
 
   // Handle playback animation
   useEffect(() => {
-    if (!playback.isPlaying) {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-        animationRef.current = undefined;
-      }
-      return;
-    }
-
     const animate = () => {
+      const { totalFrames, playback } = useTimelineStore.getState();
+
+      if (!playback.isPlaying) {
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+          animationRef.current = undefined;
+        }
+        return;
+      }
+
       const { currentFrame, fps } = playback;
       const nextFrame = currentFrame + 1;
-      
+
       if (nextFrame >= totalFrames) {
         // Loop back to beginning
         useTimelineStore.getState().setCurrentFrame(0);
       } else {
         useTimelineStore.getState().setCurrentFrame(nextFrame);
       }
-      
+
       setTimeout(() => {
         animationRef.current = requestAnimationFrame(animate);
       }, 1000 / fps);
@@ -84,7 +85,7 @@ export const Canvas = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [playback.isPlaying, playback.currentFrame, playback.fps, totalFrames, playback]);
+  }, [playback.isPlaying]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -94,13 +95,13 @@ export const Canvas = () => {
       }
     };
   }, []);
-  
+
   return (
-    <Box 
-      sx={{ 
-        display: 'flex',
-        justifyContent: 'center',
-        width: '100%'
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        width: "100%",
       }}
     >
       <canvas
@@ -109,11 +110,11 @@ export const Canvas = () => {
         width={1280}
         height={720}
         style={{
-          width: '640px',
-          height: '360px',
+          width: "640px",
+          height: "360px",
           border: `2px solid ${theme.palette.divider}`,
-          borderRadius: '8px',
-          backgroundColor: '#000'
+          borderRadius: "8px",
+          backgroundColor: "#000",
         }}
       />
     </Box>

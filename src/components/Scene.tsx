@@ -1,6 +1,8 @@
 import { Card, CardContent, Typography, Box } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import type { Scene as SceneType } from '../store/timelineStore';
+import { useTimelineStore } from '../store/timelineStore';
 
 interface SceneProps {
   scene: SceneType;
@@ -8,10 +10,108 @@ interface SceneProps {
 
 export const Scene = ({ scene }: SceneProps) => {
   const theme = useTheme();
-  const width = Math.max(scene.scene_length * 4, 120);
+  const { reorderScenes, resizeScene } = useTimelineStore();
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [resizeStartX, setResizeStartX] = useState(0);
+  const [originalLength, setOriginalLength] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
   
+  const width = Math.max(scene.scene_length * 4, 120);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    setIsDragging(true);
+    setDragStartX(e.clientX);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', scene.scene_index.toString());
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    const toIndex = scene.scene_index;
+    
+    if (fromIndex !== toIndex) {
+      reorderScenes(fromIndex, toIndex);
+    }
+  };
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeStartX(e.clientX);
+    setOriginalLength(scene.scene_length);
+  };
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!isResizing) return;
+    
+    const deltaX = e.clientX - resizeStartX;
+    const deltaFrames = Math.round(deltaX / 4); // 4px per frame
+    const newLength = Math.max(10, originalLength + deltaFrames);
+    
+    // Update the scene length in real-time for visual feedback
+    if (cardRef.current) {
+      const newWidth = Math.max(newLength * 4, 120);
+      cardRef.current.style.width = `${newWidth}px`;
+    }
+  }, [isResizing, resizeStartX, originalLength]);
+
+  const handleResizeEnd = useCallback(() => {
+    if (!isResizing) return;
+    
+    setIsResizing(false);
+    
+    // Calculate final length
+    const deltaX = (resizeStartX - dragStartX) * -1; // Invert for resize direction
+    const deltaFrames = Math.round(deltaX / 4);
+    const newLength = Math.max(10, originalLength + deltaFrames);
+    
+    if (newLength !== scene.scene_length) {
+      resizeScene(scene.scene_index, newLength);
+    }
+    
+    // Reset card width
+    if (cardRef.current) {
+      cardRef.current.style.width = '';
+    }
+  }, [isResizing, resizeStartX, dragStartX, originalLength, scene.scene_length, scene.scene_index, resizeScene]);
+
+  // Add global mouse event listeners for resize
+  useEffect(() => {
+    if (isResizing) {
+      const handleMouseMove = (e: MouseEvent) => handleResizeMove(e);
+      const handleMouseUp = () => handleResizeEnd();
+      
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isResizing, handleResizeMove, handleResizeEnd]);
+
   return (
     <Card 
+      ref={cardRef}
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       sx={{ 
         width: `${width}px`,
         height: '120px',
@@ -20,9 +120,13 @@ export const Scene = ({ scene }: SceneProps) => {
         alignItems: 'center',
         justifyContent: 'center',
         mx: 0.5,
-        cursor: 'grab',
+        cursor: isDragging ? 'grabbing' : 'grab',
         position: 'relative',
-        flexShrink: 0
+        flexShrink: 0,
+        opacity: isDragging ? 0.5 : 1,
+        transform: isDragging ? 'rotate(5deg)' : 'none',
+        transition: 'opacity 0.2s, transform 0.2s',
+        userSelect: 'none'
       }}
     >
       <CardContent sx={{ p: 1 }}>
@@ -36,10 +140,21 @@ export const Scene = ({ scene }: SceneProps) => {
         >
           {scene.scene_name}
         </Typography>
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            color: 'white',
+            textAlign: 'center',
+            opacity: 0.8
+          }}
+        >
+          {scene.scene_length} frames
+        </Typography>
       </CardContent>
       
       {/* Right resize handle */}
       <Box
+        onMouseDown={handleResizeStart}
         sx={{
           position: 'absolute',
           right: 0,

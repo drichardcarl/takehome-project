@@ -4,7 +4,11 @@ import { useTimelineStore } from '../store/timelineStore';
 import { Scene } from './Scene';
 
 export const Timeline = () => {
-  const scenes = useTimelineStore((state) => state.scenes);
+  const { scenes, addScene } = useTimelineStore();
+
+  const handleAddScene = () => {
+    addScene();
+  };
 
   return (
     <Box>
@@ -12,6 +16,7 @@ export const Timeline = () => {
         <Button 
           variant="contained" 
           startIcon={<Add />}
+          onClick={handleAddScene}
         >
           Add Scene
         </Button>

@@ -11,8 +11,14 @@ export const Timeline = () => {
   };
 
   return (
-    <Box>
-      <Box sx={{ mb: 2 }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      <Box sx={{ mb: 2, width: "90vw" }}>
         <Button
           variant="contained"
           startIcon={<Add />}
@@ -28,8 +34,8 @@ export const Timeline = () => {
           alignItems: "center",
           gap: 0.5,
           p: 2,
-          mr: 2.5,
           minHeight: "160px",
+          maxWidth: "90vw",
           overflowX: "auto",
           backgroundColor: "#cccccc",
         }}

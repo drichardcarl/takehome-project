@@ -19,7 +19,7 @@ export interface RendererAPI {
   renderScene: (
     scene_name: string,
     scene_color: string,
-    local_frame: number,
+    local_frame: number
   ) => void;
   clearCanvas: () => void;
 }
@@ -50,7 +50,7 @@ interface TimelineState {
   redo: () => void;
   recalculateTimeline: () => void;
   getSceneAtFrame: (
-    frame: number,
+    frame: number
   ) => { scene: Scene; localFrame: number } | null;
 }
 
@@ -81,7 +81,7 @@ const recalculateScenePositions = (scenes: Scene[]): Scene[] => {
       start_frame: currentFrame,
     }))
     .map((scene) => {
-      const result = { ...scene };
+      const result = { ...scene, start_frame: currentFrame };
       currentFrame += scene.scene_length;
       return result;
     });
@@ -141,7 +141,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         const recalculatedScenes = recalculateScenePositions(updatedScenes);
         const totalFrames = recalculatedScenes.reduce(
           (sum, scene) => sum + scene.scene_length,
-          0,
+          0
         );
         set({
           scenes: recalculatedScenes,
@@ -154,7 +154,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         const recalculatedScenes = recalculateScenePositions(updatedScenes);
         const totalFrames = recalculatedScenes.reduce(
           (sum, scene) => sum + scene.scene_length,
-          0,
+          0
         );
         set({
           scenes: recalculatedScenes,
@@ -184,7 +184,9 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         const recalculatedScenes = recalculateScenePositions(updatedScenes);
         set({ scenes: recalculatedScenes });
       },
-      description: `Move ${scenes[fromIndex].scene_name} to position ${toIndex + 1}`,
+      description: `Move ${scenes[fromIndex].scene_name} to position ${
+        toIndex + 1
+      }`,
     };
 
     get().executeCommand(command);
@@ -204,7 +206,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         const recalculatedScenes = recalculateScenePositions(updatedScenes);
         const totalFrames = recalculatedScenes.reduce(
           (sum, scene) => sum + scene.scene_length,
-          0,
+          0
         );
         set({
           scenes: recalculatedScenes,
@@ -220,7 +222,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         const recalculatedScenes = recalculateScenePositions(updatedScenes);
         const totalFrames = recalculatedScenes.reduce(
           (sum, scene) => sum + scene.scene_length,
-          0,
+          0
         );
         set({
           scenes: recalculatedScenes,
@@ -282,7 +284,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const recalculatedScenes = recalculateScenePositions(scenes);
     const totalFrames = recalculatedScenes.reduce(
       (sum, scene) => sum + scene.scene_length,
-      0,
+      0
     );
     set({ scenes: recalculatedScenes, totalFrames });
   },
@@ -290,7 +292,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   getSceneAtFrame: (frame: number) => {
     const { scenes } = get();
     const scene = scenes.find(
-      (s) => frame >= s.start_frame && frame < s.start_frame + s.scene_length,
+      (s) => frame >= s.start_frame && frame < s.start_frame + s.scene_length
     );
 
     if (scene) {

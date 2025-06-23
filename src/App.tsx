@@ -1,5 +1,6 @@
-import { Box, AppBar, Toolbar, Typography, IconButton } from "@mui/material";
-import { Undo, Redo } from "@mui/icons-material";
+import { Redo, Undo } from "@mui/icons-material";
+import { AppBar, Box, IconButton, Toolbar, Typography } from "@mui/material";
+import { motion } from "framer-motion";
 import { Canvas } from "./components/Canvas";
 import { PlaybackControls } from "./components/PlaybackControls";
 import { Timeline } from "./components/Timeline";
@@ -20,29 +21,52 @@ function App() {
         flexDirection: "column",
       }}
     >
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Timeline Editor
-          </Typography>
-          <IconButton
-            color="inherit"
-            disabled={!canUndo}
-            onClick={undo}
-            title="Undo"
-          >
-            <Undo />
-          </IconButton>
-          <IconButton
-            color="inherit"
-            disabled={!canRedo}
-            onClick={redo}
-            title="Redo"
-          >
-            <Redo />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
+      <motion.div
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
+      >
+        <AppBar position="static">
+          <Toolbar>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                Timeline Editor
+              </Typography>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              style={{ display: "flex", gap: "8px" }}
+            >
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <IconButton
+                  color="inherit"
+                  disabled={!canUndo}
+                  onClick={undo}
+                  title="Undo"
+                >
+                  <Undo />
+                </IconButton>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <IconButton
+                  color="inherit"
+                  disabled={!canRedo}
+                  onClick={redo}
+                  title="Redo"
+                >
+                  <Redo />
+                </IconButton>
+              </motion.div>
+            </motion.div>
+          </Toolbar>
+        </AppBar>
+      </motion.div>
 
       <Box
         sx={{
@@ -55,11 +79,36 @@ function App() {
           gap: 3,
         }}
       >
-        <Box sx={{ width: "100%" }}>
-          <Canvas />
-          <PlaybackControls />
-          <Timeline />
-        </Box>
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          style={{ width: "100%" }}
+        >
+          <Box sx={{ width: "100%" }}>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Canvas />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
+              <PlaybackControls />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+            >
+              <Timeline />
+            </motion.div>
+          </Box>
+        </motion.div>
       </Box>
     </Box>
   );

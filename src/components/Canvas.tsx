@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { wasmService } from "../services/wasmService";
 import { useTimelineStore } from "../store/timelineStore";
@@ -114,19 +115,30 @@ export const Canvas = () => {
         width: "100%",
       }}
     >
-      <canvas
-        ref={canvasRef}
-        id="canvas"
-        width={1280}
-        height={720}
-        style={{
-          width: "640px",
-          height: "360px",
-          border: `2px solid ${theme.palette.divider}`,
-          borderRadius: "8px",
-          backgroundColor: "#000",
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+        whileHover={{
+          scale: 1.02,
+          boxShadow: `0 10px 30px ${theme.palette.primary.main}20`,
         }}
-      />
+      >
+        <canvas
+          ref={canvasRef}
+          id="canvas"
+          width={1280}
+          height={720}
+          style={{
+            width: "640px",
+            height: "360px",
+            border: `2px solid ${theme.palette.divider}`,
+            borderRadius: "8px",
+            backgroundColor: "#000",
+            transition: "box-shadow 0.3s ease",
+          }}
+        />
+      </motion.div>
     </Box>
   );
 };

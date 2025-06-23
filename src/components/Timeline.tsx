@@ -1,5 +1,6 @@
 import { Add } from "@mui/icons-material";
 import { Box, Button, Paper } from "@mui/material";
+import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PIXELS_PER_FRAME, TIMELINE_PADDING } from "../constants";
 import { useTimelineStore } from "../store/timelineStore";
@@ -9,6 +10,15 @@ export const Timeline = () => {
   const { scenes, addScene, playback, totalFrames, setCurrentFrame } =
     useTimelineStore();
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
+  const [dragState, setDragState] = useState<{
+    isDragging: boolean;
+    draggedIndex: number | null;
+    dropIndex: number | null;
+  }>({
+    isDragging: false,
+    draggedIndex: null,
+    dropIndex: null,
+  });
   const paperRef = useRef<HTMLDivElement>(null);
 
   const handleAddScene = () => {
@@ -69,6 +79,32 @@ export const Timeline = () => {
     setIsDraggingPlayhead(false);
   }, []);
 
+  // Handle drag state updates
+  const handleDragStart = (index: number) => {
+    setDragState({
+      isDragging: true,
+      draggedIndex: index,
+      dropIndex: null,
+    });
+  };
+
+  const handleDragEnd = () => {
+    setDragState({
+      isDragging: false,
+      draggedIndex: null,
+      dropIndex: null,
+    });
+  };
+
+  const handleDragOver = (index: number) => {
+    if (dragState.isDragging && dragState.draggedIndex !== null) {
+      setDragState((prev) => ({
+        ...prev,
+        dropIndex: index,
+      }));
+    }
+  };
+
   useEffect(() => {
     if (isDraggingPlayhead) {
       document.addEventListener("mousemove", handleMouseMove);
@@ -116,35 +152,116 @@ export const Timeline = () => {
           cursor: "pointer",
         }}
       >
-        {scenes.map((scene) => (
-          <Scene key={scene.scene_index} scene={scene} />
-        ))}
+        <AnimatePresence>
+          {scenes.map((scene, index) => (
+            <motion.div
+              key={scene.scene_index}
+              layout
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                x:
+                  dragState.isDragging && dragState.draggedIndex === index
+                    ? 0
+                    : 0,
+              }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+                duration: 0.3,
+              }}
+              style={{
+                position: "relative",
+                zIndex:
+                  dragState.isDragging && dragState.draggedIndex === index
+                    ? 1000
+                    : 1,
+              }}
+            >
+              <Scene
+                scene={scene}
+                onDragStart={() => handleDragStart(index)}
+                onDragEnd={handleDragEnd}
+                onDragOver={() => handleDragOver(index)}
+                isDragPreview={
+                  dragState.isDragging && dragState.draggedIndex === index
+                }
+                showDropZone={
+                  dragState.isDragging &&
+                  dragState.dropIndex === index &&
+                  dragState.draggedIndex !== index
+                }
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
 
-        <Box
+        {/* Drop zone indicators */}
+        <AnimatePresence>
+          {dragState.isDragging && dragState.dropIndex !== null && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                position: "absolute",
+                left: `${(() => {
+                  let position = TIMELINE_PADDING;
+                  for (let i = 0; i < dragState.dropIndex; i++) {
+                    position += scenes[i].scene_length * PIXELS_PER_FRAME;
+                  }
+                  return position;
+                })()}px`,
+                transform: "translateY(-50%)",
+                width: "4px",
+                height: "140px",
+                backgroundColor: "#ff4444",
+                borderRadius: "2px",
+                zIndex: 999,
+              }}
+            />
+          )}
+        </AnimatePresence>
+
+        <motion.div
           onMouseDown={handlePlayheadMouseDown}
-          sx={{
+          animate={{
+            x: playheadPosition,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 30,
+          }}
+          style={{
             position: "absolute",
-            left: `${playheadPosition + TIMELINE_PADDING}px`,
             top: "12px",
             bottom: "5px",
             width: "2px",
             backgroundColor: "red",
             cursor: "grab",
             zIndex: 10,
-            "&:hover": {
-              width: "4px",
-              backgroundColor: "#ff3333",
-            },
-            "&:active": {
-              cursor: "grabbing",
-            },
+          }}
+          whileHover={{
+            backgroundColor: "#ff3333",
+          }}
+          whileTap={{
+            cursor: "grabbing",
           }}
         >
-          <Box
-            sx={{
+          <motion.div
+            animate={{
+              rotate: isDraggingPlayhead ? 180 : 0,
+            }}
+            transition={{ duration: 0.2 }}
+            style={{
               position: "absolute",
               top: -8,
-              left: "50%",
+              left: -7,
               transform: "translateX(-50%)",
               width: 0,
               height: 0,
@@ -153,7 +270,7 @@ export const Timeline = () => {
               borderBottom: "8px solid red",
             }}
           />
-        </Box>
+        </motion.div>
       </Paper>
     </Box>
   );

@@ -1,5 +1,6 @@
-import { Box, IconButton, Slider, Typography, Paper } from "@mui/material";
-import { PlayArrow, Pause } from "@mui/icons-material";
+import { Pause, PlayArrow } from "@mui/icons-material";
+import { Box, IconButton, Paper, Slider, Typography } from "@mui/material";
+import { FRAMES_PER_SECOND } from "../constants";
 import { useTimelineStore } from "../store/timelineStore";
 
 export const PlaybackControls = () => {
@@ -7,7 +8,7 @@ export const PlaybackControls = () => {
     useTimelineStore();
 
   const formatTime = (frames: number) => {
-    const seconds = Math.floor(frames / 30);
+    const seconds = Math.floor(frames / FRAMES_PER_SECOND);
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;

@@ -1,8 +1,9 @@
-import { Box, Button, Paper } from "@mui/material";
 import { Add } from "@mui/icons-material";
+import { Box, Button, Paper } from "@mui/material";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { PIXELS_PER_FRAME, TIMELINE_PADDING } from "../constants";
 import { useTimelineStore } from "../store/timelineStore";
 import { Scene } from "./Scene";
-import { useState, useRef, useCallback, useEffect } from "react";
 
 export const Timeline = () => {
   const { scenes, addScene, playback, totalFrames, setCurrentFrame } =
@@ -14,10 +15,9 @@ export const Timeline = () => {
     addScene();
   };
 
-  const contentWidth =
-    scenes.reduce((total, scene) => {
-      return total + Math.max(scene.scene_length * 4, 120);
-    }, 0) + (scenes.length > 1 ? (scenes.length - 1) * 4 : 0);
+  const contentWidth = scenes.reduce((total, scene) => {
+    return total + scene.scene_length * PIXELS_PER_FRAME;
+  }, 0);
 
   const playheadPosition =
     totalFrames > 0 ? (playback.currentFrame / totalFrames) * contentWidth : 0;
@@ -34,9 +34,8 @@ export const Timeline = () => {
 
       const rect = paperRef.current.getBoundingClientRect();
       const scrollLeft = paperRef.current.scrollLeft;
-      const paddingLeft = 16; // p: 2
 
-      const mouseX = positionX - rect.left + scrollLeft - paddingLeft;
+      const mouseX = positionX - rect.left + scrollLeft - TIMELINE_PADDING;
       const clampedMouseX = Math.max(0, Math.min(mouseX, contentWidth));
 
       if (contentWidth > 0) {
@@ -107,7 +106,7 @@ export const Timeline = () => {
           position: "relative",
           display: "flex",
           alignItems: "center",
-          p: 2,
+          p: `${TIMELINE_PADDING}px`,
           pt: "24px",
           minHeight: "160px",
           width: "90vw",
@@ -125,7 +124,7 @@ export const Timeline = () => {
           onMouseDown={handlePlayheadMouseDown}
           sx={{
             position: "absolute",
-            left: `${playheadPosition + 16}px`,
+            left: `${playheadPosition + TIMELINE_PADDING}px`,
             top: "12px",
             bottom: "5px",
             width: "2px",

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { FRAMES_PER_SECOND } from "../constants";
 
 export interface Scene {
   scene_name: string;
@@ -188,7 +189,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   playback: {
     isPlaying: false,
     currentFrame: 0,
-    fps: 30,
+    fps: FRAMES_PER_SECOND,
   },
   commandHistory: [],
   commandIndex: -1,

@@ -1,6 +1,7 @@
-import { Card, CardContent, Typography, Box } from "@mui/material";
+import { Box, Card, CardContent, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { MIN_SCENE_LENGTH, PIXELS_PER_FRAME } from "../constants";
 import type { Scene as SceneType } from "../store/timelineStore";
 import { useTimelineStore } from "../store/timelineStore";
 
@@ -18,7 +19,7 @@ export const Scene = ({ scene }: SceneProps) => {
   const [currentMouseX, setCurrentMouseX] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const width = Math.max(scene.scene_length * 4, 120);
+  const width = scene.scene_length * PIXELS_PER_FRAME;
 
   const handleDragStart = (e: React.DragEvent) => {
     setIsDragging(true);
@@ -59,12 +60,18 @@ export const Scene = ({ scene }: SceneProps) => {
 
       setCurrentMouseX(e.clientX);
       const deltaX = e.clientX - resizeStartX;
-      const deltaFrames = Math.round(deltaX / 4); // 4px per frame
-      const newLength = Math.max(10, originalLength + deltaFrames);
+      const deltaFrames = Math.round(deltaX / PIXELS_PER_FRAME);
+      const newLength = Math.max(
+        MIN_SCENE_LENGTH,
+        originalLength + deltaFrames
+      );
 
       // Update the scene length in real-time for visual feedback
       if (cardRef.current) {
-        const newWidth = Math.max(newLength * 4, 120);
+        const newWidth = Math.max(
+          newLength * PIXELS_PER_FRAME,
+          MIN_SCENE_LENGTH * PIXELS_PER_FRAME
+        );
         cardRef.current.style.width = `${newWidth}px`;
       }
     },
@@ -78,8 +85,8 @@ export const Scene = ({ scene }: SceneProps) => {
 
     // Calculate final length using current mouse position
     const deltaX = currentMouseX - resizeStartX;
-    const deltaFrames = Math.round(deltaX / 4);
-    const newLength = Math.max(10, originalLength + deltaFrames);
+    const deltaFrames = Math.round(deltaX / PIXELS_PER_FRAME);
+    const newLength = Math.max(MIN_SCENE_LENGTH, originalLength + deltaFrames);
 
     if (newLength !== scene.scene_length) {
       resizeScene(scene.scene_index, newLength);

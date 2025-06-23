@@ -1,8 +1,8 @@
 import { Box } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useEffect, useRef } from "react";
-import { useTimelineStore } from "../store/timelineStore";
 import { wasmService } from "../services/wasmService";
+import { useTimelineStore } from "../store/timelineStore";
 
 export const Canvas = () => {
   const theme = useTheme();
@@ -69,13 +69,13 @@ export const Canvas = () => {
 
       if (!playback.isPlaying) {
         if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
+          clearInterval(animationRef.current);
           animationRef.current = undefined;
         }
         return;
       }
 
-      const { currentFrame, fps } = playback;
+      const { currentFrame } = playback;
       const nextFrame = currentFrame + 1;
 
       if (nextFrame >= totalFrames) {
@@ -84,20 +84,18 @@ export const Canvas = () => {
       } else {
         useTimelineStore.getState().setCurrentFrame(nextFrame);
       }
-
-      setTimeout(() => {
-        animationRef.current = requestAnimationFrame(animate);
-      }, 1000 / fps);
     };
 
-    animationRef.current = requestAnimationFrame(animate);
+    if (animationRef.current) clearInterval(animationRef.current);
+    animationRef.current = setInterval(animate, 1000 / playback.fps);
 
     return () => {
       if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+        clearInterval(animationRef.current);
+        animationRef.current = undefined;
       }
     };
-  }, [playback.isPlaying]);
+  }, [playback.fps, playback.isPlaying]);
 
   // Cleanup on unmount
   useEffect(() => {
